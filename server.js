@@ -1,5 +1,7 @@
 "use strict";
 
+const Zen = require("@aikidosec/firewall"); // Include this before any other code or imports
+
 const express = require("express");
 const favicon = require("serve-favicon");
 const bodyParser = require("body-parser");
@@ -100,6 +102,20 @@ MongoClient.connect(db, (err, db) => {
         */
 
     }));
+
+    // Set the current user for Zen (only for authenticated users)
+    app.use((req, res, next) => {
+        if (req.session && req.session.userId) {
+            Zen.setUser({
+                id: String(req.session.userId)
+            });
+        }
+
+        next();
+    });
+
+    // Zen middleware for rate limiting and user blocking, after the auth/session middleware
+    Zen.addExpressMiddleware(app);
 
     /*
     // Fix for A8 - CSRF
